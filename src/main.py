@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -13,6 +14,10 @@ from jinja2 import Template
 import urllib
 import requests
 from requests_html import HTMLSession
+import os
+
+import database
+
 
 app = FastAPI()
 
@@ -20,9 +25,17 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
+BASE_DOMAIN = os.getenv('BASE_DOMAIN', 'http://localhost:8000')
+
+
+
 @app.get("/")
 async def status():
     return {"status": "OK"}
+
+@app.get("/feeds")
+async def feeds(request: Request):
+    return database.feeds
 
 @app.get("/page/{template}")
 async def template_page(request: Request, template: str, text: Optional[str] = None):
@@ -61,7 +74,7 @@ async def firefox_page(request: Request, template: str, text: Optional[str] = No
     options.headless = True
     driver = webdriver.Firefox(options=options, firefox_profile=profile)
     driver.set_window_size(1200, 630)
-    driver.get(f"http://localhost:8000/page/{template}?text={text}")
+    driver.get(f"{BASE_DOMAIN}/page/{template}?text={text}")
     image = driver.get_screenshot_as_png()
     driver.quit()
     return StreamingResponse(io.BytesIO(image), 
@@ -111,15 +124,17 @@ def generate_screenshot(browser: str, html: str):
 @app.get('/rss/feed/{rss_name}')
 async def proxy_rss_feed(request: Request, rss_name: str):
 
-    url = 'https://www.simplecto.com/rss/'
-    # open the csv
-    # search for the feed url matching name (take first match)
-    # if no match then return 404
-    # get request on the url feed
-    # return response of the feed contents
-    r = requests.get(url)
+    r = requests.get(database.feeds[rss_name])
+    soup = BeautifulSoup(r.content, "xml")
+    items = soup.find_all('item')
+    for i in items:
+        link = i.find('link')
 
-    return Response(content=r.content, media_type="application/xml")
+        url = urllib.parse.quote(link.text)
+
+        link.string = f'{BASE_DOMAIN}/rss/feed/simplecto/link?url={url}'
+
+    return Response(content=soup, media_type="application/xml")
 
 
 @app.get('/rss/feed/{rss_name}/link')
@@ -138,7 +153,7 @@ async def proxy_rss_feed(request: Request, rss_name: str, url: Optional[str] = N
         "page_title": title,
         "page_description": "todo this",
         "content": r.content,
-        "og_image": f'http://localhost:8000/generate/chrome/90daydx?text={title_encoded}',
+        "og_image": f'{BASE_DOMAIN}/generate/chrome/90daydx?text={title_encoded}',
         "page_link": url
     }
     return templates.TemplateResponse(f"fake_page.html", payload)
