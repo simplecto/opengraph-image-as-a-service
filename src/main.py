@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.responses import StreamingResponse
@@ -38,10 +38,14 @@ async def feeds(request: Request):
     return database.feeds
 
 @app.get("/page/{template}")
-async def template_page(request: Request, template: str, text: Optional[str] = None):
+async def template_page(request: Request,
+                        template: str,
+                        text: str,
+                        byline: str):
     payload = {
         "request": request,
-        "text": text
+        "text": text,
+        "byline": byline,
     }
     return templates.TemplateResponse(f"{template}.html", payload)
 
@@ -66,38 +70,21 @@ async def firefox_remote_page(request: Request, template: str, text: Optional[st
     return StreamingResponse(io.BytesIO(image), 
                              media_type="image/png")
 
-"""
-@app.get("/generate/firefox/{template}")
-async def firefox_page(request: Request, template: str, text: Optional[str] = None):
-    profile = webdriver.FirefoxProfile()
-    options = Options()
-    options.headless = True
-    driver = webdriver.Firefox(options=options, firefox_profile=profile)
-    driver.set_window_size(1200, 630)
-    driver.get(f"{BASE_DOMAIN}/page/{template}?text={text}")
-    image = driver.get_screenshot_as_png()
-    driver.quit()
-    return StreamingResponse(io.BytesIO(image), 
-                             media_type="image/png")
-"""
 
 @app.get("/generate/{browser}/{template}")
-async def get_ogimage(request: Request, browser: str, template: str, text: Optional[str] = None):
+async def get_ogimage(request: Request,
+                      browser: str,
+                      template: str,
+                      text: str,
+                      byline: str):
 
     template_str = Path(f"templates/{template}.html").read_text()
     t = Template(template_str)
-    html = urllib.parse.quote(t.render(text=text))
+    html = urllib.parse.quote(t.render(text=text, page_byline=byline))
 
     image = generate_screenshot(browser=browser, html=html)
     return StreamingResponse(io.BytesIO(image), 
                              media_type="image/png")
-
-@app.get("/content/{id}")
-async def content_page(request: Request, id: str):
-    payload = {
-        "request": request,
-    }
-    return templates.TemplateResponse(f"content.html", payload)
 
 
 def generate_screenshot(browser: str, html: str):
@@ -121,10 +108,16 @@ def generate_screenshot(browser: str, html: str):
 
     return image
 
+# dont break this! it is used in production
 @app.get('/rss/feed/{rss_name}')
 async def proxy_rss_feed(request: Request, rss_name: str):
 
-    r = requests.get(database.feeds[rss_name])
+    if rss_name not in database.feeds:
+        raise HTTPException(status_code=404, detail="Feed not found")
+
+    r = requests.get(database.feeds[rss_name]['url'])
+    byline = urllib.parse.quote(database.feeds[rss_name]['name'])
+
     soup = BeautifulSoup(r.content, "xml")
     items = soup.find_all('item')
     for i in items:
@@ -132,28 +125,38 @@ async def proxy_rss_feed(request: Request, rss_name: str):
 
         url = urllib.parse.quote(link.text)
 
-        link.string = f'{BASE_DOMAIN}/rss/feed/simplecto/link?url={url}'
+        link.string = f'{BASE_DOMAIN}/rss/link?url={url}&byline={byline}'
 
     return Response(content=soup, media_type="application/xml")
 
+@app.get('/rss/link')
+async def proxy_rss_link(request: Request, url: str, byline: str):
 
-@app.get('/rss/feed/{rss_name}/link')
-async def proxy_rss_feed(request: Request, rss_name: str, url: Optional[str] = None):
-
-    # fetch the rss feed (reference cache first)
-    # fetch contents of the link
-    # take title of page
-    # display HTML of new page
     session = HTMLSession()
     r = session.get(url)
-    title = r.html.find('title')[0].text
+
+    try: 
+        title = r.html.find('title', first=True).text
+    except AttributeError:
+        title = ''
+
+    try:
+        description = r.html.find('meta[name=description]',first=True).attrs['content']
+    except AttributeError:
+        description = ''
+    except KeyError:
+        description = ''
+
     title_encoded = urllib.parse.quote(title)
+
+    page_content = ''.join([h.html for h in r.html.find('body *')])
     payload = {
         "request": request,
         "page_title": title,
-        "page_description": "todo this",
-        "content": r.content,
-        "og_image": f'{BASE_DOMAIN}/generate/chrome/90daydx?text={title_encoded}',
+        "page_byline": byline,
+        "page_description": description, 
+        "page_content": page_content,
+        "og_image": f'{BASE_DOMAIN}/generate/chrome/90daydx?text={title_encoded}&byline={byline}',
         "page_link": url
     }
     return templates.TemplateResponse(f"fake_page.html", payload)
