@@ -1,41 +1,36 @@
-from bs4 import BeautifulSoup
 from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.responses import StreamingResponse
-import io
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 from typing import Optional
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from pathlib import Path
 from jinja2 import Template
-
 import urllib
 import requests
 from requests_html import HTMLSession
+from bs4 import BeautifulSoup
 import os
-
+import io
+from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.firefox.options import Options
 import database
 
-
 app = FastAPI()
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
 templates = Jinja2Templates(directory="templates")
-
 BASE_DOMAIN = os.getenv('BASE_DOMAIN', 'http://localhost:8000')
-
 
 
 @app.get("/")
 async def status():
     return {"status": "OK"}
 
+
 @app.get("/feeds")
 async def feeds(request: Request):
     return database.feeds
+
 
 @app.get("/page/{template}")
 async def template_page(request: Request,
@@ -45,9 +40,10 @@ async def template_page(request: Request,
     payload = {
         "request": request,
         "text": text,
-        "byline": byline,
+        "page_byline": byline
     }
     return templates.TemplateResponse(f"{template}.html", payload)
+
 
 @app.get("/generate/firefox-remote/{template}")
 async def firefox_remote_page(request: Request, template: str, text: Optional[str] = None):
@@ -108,6 +104,7 @@ def generate_screenshot(browser: str, html: str):
 
     return image
 
+
 # dont break this! it is used in production
 @app.get('/rss/feed/{rss_name}')
 async def proxy_rss_feed(request: Request, rss_name: str):
@@ -128,6 +125,7 @@ async def proxy_rss_feed(request: Request, rss_name: str):
         link.string = f'{BASE_DOMAIN}/rss/link?url={url}&byline={byline}'
 
     return Response(content=soup, media_type="application/xml")
+
 
 @app.get('/rss/link')
 async def proxy_rss_link(request: Request, url: str, byline: str):
