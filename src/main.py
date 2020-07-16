@@ -15,6 +15,7 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.firefox.options import Options
 import database
+import os
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -24,7 +25,10 @@ BASE_DOMAIN = os.getenv('BASE_DOMAIN', 'http://localhost:8000')
 
 @app.get("/")
 async def status():
-    return {"status": "OK"}
+    return {
+        "status": "OK",
+        "release": os.getenv('RELEASE')
+    }
 
 
 @app.get("/feeds")
