@@ -35,6 +35,10 @@ feeds = {
         "name": "InfoWeek",
         "url": "https://informationweek.com/rss_simple.asp?f_n=424&f_ln=Big%20Data",
     },
+    "infoweek_strat_cio" : {
+        "name": "InfoWeek Strategic CIO",
+        "url": "https://informationweek.com/rss_simple.asp?f_n=630&f_ln=Strategic%20CIO",
+    },
     "mckinsey": {
         "name": "McKinsey & Co.",
         "url": "https://www.mckinsey.com/Insights/rss.aspx",
