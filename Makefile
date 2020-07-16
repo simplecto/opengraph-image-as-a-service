@@ -1,3 +1,7 @@
+DATE := $(shell date +"%Y%m%d%H%M")
+GIT_HASH := $(shell git rev-parse --short HEAD)
+RELEASE := $(DATE)-$(GIT_HASH)
+
 ###############################################################################
 # HELP / DEFAULT COMMAND
 ###############################################################################
@@ -7,11 +11,11 @@ help:
 
 .PHONY: build
 build: ## build a local docker container
-	docker build -t ogaas .
+	docker build --build-arg RELEASE=$(RELEASE) -t ogaas .
 
 .PHONY: build-remote
 build-remote: ## build on the remote container
-	docker -H 90daydx build -t ogaas .
+	docker -H 90daydx build --build-arg RELEASE=$(RELEASE) -t ogaas .
 
 .PHONY: run
 run: ## run the container in local development mode
