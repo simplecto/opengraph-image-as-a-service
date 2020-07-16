@@ -128,10 +128,12 @@ async def proxy_rss_feed(request: Request, rss_name: str):
 
 
 @app.get('/rss/link')
-async def proxy_rss_link(request: Request, url: str, byline: str):
+async def proxy_rss_link(request: Request, url: str, byline: Optional[str] = None):
 
     session = HTMLSession()
     r = session.get(url)
+
+    byline = url.split('/')[2] if not byline else byline
 
     try: 
         title = r.html.find('title', first=True).text
