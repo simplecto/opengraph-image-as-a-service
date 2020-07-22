@@ -9,7 +9,6 @@ import urllib
 import requests
 from requests_html import HTMLSession
 from bs4 import BeautifulSoup
-import os
 import io
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -117,7 +116,6 @@ async def proxy_rss_feed(request: Request, rss_name: str):
         raise HTTPException(status_code=404, detail="Feed not found")
 
     r = requests.get(database.feeds[rss_name]['url'])
-    byline = urllib.parse.quote(database.feeds[rss_name]['name'])
 
     soup = BeautifulSoup(r.content, "xml")
     items = soup.find_all('item')
@@ -126,18 +124,18 @@ async def proxy_rss_feed(request: Request, rss_name: str):
 
         url = urllib.parse.quote(link.text)
 
-        link.string = f'{BASE_DOMAIN}/rss/link?url={url}&byline={byline}'
+        link.string = f'{BASE_DOMAIN}/rss/link?url={url}'
 
     return Response(content=soup, media_type="application/xml")
 
 
 @app.get('/rss/link')
-async def proxy_rss_link(request: Request, url: str, byline: Optional[str] = None):
+async def proxy_rss_link(request: Request, url: str):
 
     session = HTMLSession()
     r = session.get(url)
 
-    byline = url.split('/')[2] if not byline else byline
+    byline = url.split('/')[2] 
 
     try: 
         title = r.html.find('title', first=True).text
