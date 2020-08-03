@@ -15,7 +15,8 @@ build: ## build a local docker container
 
 .PHONY: build-remote
 build-remote: ## build on the remote container
-	docker -H 90daydx build --build-arg RELEASE=$(RELEASE) -t ogaas .
+	@docker -H 90daydx build --build-arg RELEASE=$(RELEASE) -t ogaas .
+	@echo "https://www.90daydx.com/ogaas/generate/chrome/90daydx?text=Sanity%20Check%20$(DATE)&byline=www.90daydx.com"
 
 .PHONY: run
 run: ## run the container in local development mode
