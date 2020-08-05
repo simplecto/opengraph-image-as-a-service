@@ -40,9 +40,11 @@ async def template_page(request: Request,
                         template: str,
                         text: str,
                         byline: str):
+
+    untext=urllib.parse.unquote_plus(text)
     payload = {
         "request": request,
-        "text": text,
+        "text": untext,
         "page_byline": byline
     }
     return templates.TemplateResponse(f"{template}.html", payload)
@@ -79,7 +81,8 @@ async def get_ogimage(request: Request,
 
     template_str = Path(f"templates/{template}.html").read_text()
     t = Template(template_str)
-    html = urllib.parse.quote(t.render(text=text, page_byline=byline))
+    untext=urllib.parse.unquote_plus(text)
+    html = urllib.parse.quote(t.render(text=untext , page_byline=byline))
 
     image = generate_screenshot(browser=browser, html=html)
     return StreamingResponse(io.BytesIO(image), 
