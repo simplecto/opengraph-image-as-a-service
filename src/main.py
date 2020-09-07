@@ -138,6 +138,29 @@ async def proxy_rss_feed(request: Request, rss_name: str):
 
     return Response(content=soup, media_type="application/xml")
 
+@app.get('/rss/anyfeed')
+async def proxy_rss_anyfeed(request: Request, url: str):
+
+    r = requests.get(url)
+
+    soup = BeautifulSoup(r.content, "xml")
+    items = soup.find_all('item')
+    for i in items:
+        link = i.find('link')
+
+        url = urllib.parse.quote(link.text)
+
+        link.string = f'{BASE_DOMAIN}/rss/link?url={url}'
+
+        attrs = {
+            "href": "http://genchi.info/image/los-angeles-4k-wallpaper-29.jpg",
+            "type": "image/jpeg"
+        }
+        enclosure = soup.new_tag("enclosure", attrs=attrs)
+        i.append(enclosure)
+
+    return Response(content=soup, media_type="application/xml")
+
 
 @app.get('/rss/link')
 async def proxy_rss_link(request: Request, url: str):
