@@ -153,7 +153,7 @@ async def proxy_rss_anyfeed(request: Request, url: str):
         link.string = f'{BASE_DOMAIN}/rss/link?url={url}'
 
         attrs = {
-            "href": "http://genchi.info/image/los-angeles-4k-wallpaper-29.jpg",
+            "url": "http://genchi.info/image/los-angeles-4k-wallpaper-29.jpg",
             "type": "image/jpeg"
         }
         enclosure = soup.new_tag("enclosure", attrs=attrs)
