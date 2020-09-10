@@ -15,6 +15,8 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.firefox.options import Options
 import database
 import os
+import ogutils
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -131,7 +133,8 @@ async def proxy_rss_feed(request: Request, rss_name: str):
 
         attrs = {
             "url": "http://genchi.info/image/los-angeles-4k-wallpaper-29.jpg",
-            "type": "image/jpeg"
+            "type": "image/jpeg",
+            "length": 1322939
         }
         enclosure = soup.new_tag("enclosure", attrs=attrs)
         i.append(enclosure)
@@ -139,7 +142,10 @@ async def proxy_rss_feed(request: Request, rss_name: str):
     return Response(content=soup, media_type="application/xml")
 
 @app.get('/rss/anyfeed')
-async def proxy_rss_anyfeed(request: Request, url: str):
+async def proxy_rss_anyfeed(request: Request,
+                            url: str,
+                            add_enclosure: Optional[str] = None,
+                            item_max_age_days: int = 8):
 
     r = requests.get(url)
 
@@ -147,17 +153,20 @@ async def proxy_rss_anyfeed(request: Request, url: str):
     items = soup.find_all('item')
     for i in items:
         link = i.find('link')
+        post_age_days = ogutils.get_item_age_days(i)
+
+        if post_age_days < item_max_age_days:
+            if add_enclosure in ['t', 'true', 'y', 'yes']:
+                attrs = ogutils.get_og_image_as_rss_enclosure_attrs(link.text)
+
+                if attrs:
+                    enclosure = soup.new_tag("enclosure", attrs=attrs)
+                    i.append(enclosure)
 
         url = urllib.parse.quote(link.text)
 
         link.string = f'{BASE_DOMAIN}/rss/link?url={url}'
 
-        attrs = {
-            "url": "http://genchi.info/image/los-angeles-4k-wallpaper-29.jpg",
-            "type": "image/jpeg"
-        }
-        enclosure = soup.new_tag("enclosure", attrs=attrs)
-        i.append(enclosure)
 
     return Response(content=soup, media_type="application/xml")
 
