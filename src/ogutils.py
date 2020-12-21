@@ -7,7 +7,8 @@ import pytz
 
 def get_og_image_as_rss_enclosure_attrs(url):
 
-    title, description, image = web_preview(url, parser='lxml')
+    headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
+    title, description, image = web_preview(url, parser='lxml', headers=headers)
 
     if not image:
         return None
