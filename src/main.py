@@ -147,7 +147,8 @@ async def proxy_rss_anyfeed(request: Request,
                             add_enclosure: Optional[str] = None,
                             item_max_age_days: int = 8):
 
-    r = requests.get(url)
+    headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
+    r = requests.get(url, headers=headers)
 
     soup = BeautifulSoup(r.content, "xml")
     items = soup.find_all('item')
