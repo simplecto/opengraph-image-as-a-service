@@ -16,6 +16,8 @@ from selenium.webdriver.firefox.options import Options
 import database
 import os
 import ogutils
+from pydantic import BaseModel, HttpUrl, Field
+from typing import Dict
 
 
 app = FastAPI()
@@ -24,31 +26,56 @@ templates = Jinja2Templates(directory="templates")
 BASE_DOMAIN = os.getenv('BASE_DOMAIN', 'http://localhost:8000')
 
 
-@app.get("/")
+class StatusCheck(BaseModel):
+    status: str
+    release: str
+
+
+class RSSEntry(BaseModel):
+    name: str
+    url: HttpUrl
+
+
+@app.get(
+    "/",
+    response_model=StatusCheck,
+    summary="A basic status check and version number.",
+    status_code=200
+)
 async def status():
     return {
         "status": "OK",
-        "release": os.getenv('RELEASE')
+        "release": os.getenv('RELEASE', 'OH. need this')
     }
 
 
-@app.get("/feeds")
+@app.get(
+    "/feeds",
+    response_model=Dict[str, RSSEntry],
+    summary="Get a list of RSS feeds we saved",
+    status_code=200
+)
 async def feeds(request: Request):
     return database.feeds
 
 
-@app.get("/page/{template}")
+@app.get(
+    "/page/{template}",
+    summary="Return a rendered template.",
+    description="This should be used for development of the template."
+)
 async def template_page(request: Request,
                         template: str,
                         text: str,
                         byline: str):
 
-    untext=urllib.parse.unquote_plus(text)
+    untext = urllib.parse.unquote_plus(text)
     payload = {
         "request": request,
         "text": untext,
         "page_byline": byline
     }
+
     return templates.TemplateResponse(f"{template}.html", payload)
 
 
@@ -92,6 +119,7 @@ async def get_ogimage(request: Request,
 
 
 def generate_screenshot(browser: str, html: str):
+
     if browser == 'chrome':
         options = webdriver.ChromeOptions()
         options.add_argument('--no-sandbox')
@@ -172,8 +200,21 @@ async def proxy_rss_anyfeed(request: Request,
     return Response(content=soup, media_type="application/xml")
 
 
-@app.get('/rss/link')
-async def proxy_rss_link(request: Request, url: str):
+@app.get(
+    '/rss/link',
+    summary="Generate a fake HTML page that rewrites the opengraph image that gets scraped.",
+    description=
+    """
+        This function allows us to subtly replace the opengraph image of our linked page with
+        our own generated opengraph image. We do this by proxying the request, intercepting the
+        html, and rewrite the opengraph portion of the html.
+        
+        This way the Facebook / LinkedIn / Twitter / etc scrapers see our HTML content rather
+        than the target content in full.
+    """
+
+)
+async def proxy_rss_link(request: Request, url: HttpUrl):
 
     session = HTMLSession()
     r = session.get(url)
