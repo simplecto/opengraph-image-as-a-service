@@ -1,6 +1,12 @@
+assets/
 venv/
-__pycache__/
-*.pyc
-*.log
-.pytest_cache/
+**/__pycache__/
+**/.pytest_cache/
 playground/
+*.log
+*.pyc
+env.*
+Makefile
+README.md
+.gitignore
+.dockerignore
