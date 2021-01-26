@@ -1,7 +1,7 @@
 feeds = {
     "90daydx": {
         "name": "",
-            "url": "https://www.90daydx.com/rss/",
+        "url": "https://www.90daydx.com/rss/",
     },
     "simplecto": {
         "name": "SimpleCTO",
