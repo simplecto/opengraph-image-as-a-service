@@ -10,11 +10,13 @@ client = TestClient(app)
 def test_status():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"status": "OK"}
+    assert response.json() == {'release': 'OH. need this', 'status': 'OK'}
+
 
 def test_feeds():
     response = client.get("/feeds")
     assert 'simplecto' in response.json()
+
 
 def test_template_page():
     params = {
@@ -24,12 +26,14 @@ def test_template_page():
     response = client.get("/page/90daydx", params=params)
     assert response.status_code == 200
 
+
 def test_template_page_missing_byline():
     params = {
         "text": "this is the text"
     }
     response = client.get("/page/90daydx")
     assert response.status_code == 422
+
 
 def test_template_page_missing_text():
     params = {
@@ -38,13 +42,16 @@ def test_template_page_missing_text():
     response = client.get("/page/90daydx")
     assert response.status_code == 422
 
+
 def test_proxy_rss_feed():
     response = client.get("/rss/feed/90daydx")
     assert response.status_code == 200
 
+
 def test_proxy_rss_feed_not_found():
     response = client.get("/rss/feed/nothere")
     assert response.status_code == 404
+
 
 def test_proxy_rss_link():
     params = {
@@ -54,12 +61,14 @@ def test_proxy_rss_link():
     response = client.get("/rss/link", params=params)
     assert response.status_code == 200
 
+
 def test_proxy_rss_link_missing_url():
     params = {
         "byline": urllib.parse.quote('test suite')
     }
     response = client.get("/rss/link", params=params)
     assert response.status_code == 422
+
 
 def test_proxy_rss_link_missing_byline():
     params = {
@@ -80,7 +89,7 @@ def test_proxy_rss_link_missing_title():
     assert response.status_code == 200
 
 
-def test_proxy_rss_link_missing_meta_Description():
+def test_proxy_rss_link_missing_meta_description():
     html = "<html><head></head><body></body></html>"
     r = requests.put('https://the99utilsliflrvju-keyvalstore.functions.fnc.fr-par.scw.cloud/test-no-title', data=html)
     params = {
