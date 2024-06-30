@@ -23,7 +23,7 @@ packaging==20.4
 parse==1.15.0
 pluggy==0.13.1
 py==1.10.0
-pydantic==1.6.2
+pydantic==1.10.13
 pyee==7.0.2
 pyparsing==2.4.7
 pyppeteer==0.2.2
