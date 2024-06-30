@@ -6,7 +6,7 @@ bs4==0.0.2
 certifi==2023.7.22
 chardet==3.0.4
 click==7.1.2
-cssselect==1.1.0
+cssselect==1.2.0
 dataclasses==0.7
 dateparser==0.7.6
 fake-useragent==0.1.11
