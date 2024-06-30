@@ -16,7 +16,7 @@ httptools==0.1.1
 idna==2.10
 importlib-metadata==1.7.0
 Jinja2==3.1.4
-lxml==4.9.1
+lxml==5.2.2
 MarkupSafe==1.1.1
 more-itertools==8.4.0
 packaging==20.4
