@@ -29,7 +29,7 @@ pyparsing==2.4.7
 pyppeteer==0.2.2
 pyquery==1.4.1
 pytest==5.4.3
-requests==2.24.0
+requests==2.32.2
 requests-html==0.10.0
 selenium==3.141.0
 six==1.15.0
