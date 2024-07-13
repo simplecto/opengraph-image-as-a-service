@@ -5,7 +5,7 @@ beautifulsoup4==4.9.1
 bs4==0.0.2
 certifi==2024.7.4
 chardet==3.0.4
-click==7.1.2
+click==8.1.7
 cssselect==1.2.0
 dataclasses==0.7
 dateparser==1.2.0
